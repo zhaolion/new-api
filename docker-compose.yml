@@ -1,4 +1,4 @@
-# New-API Docker Compose Configuration with Hydra Integration
+# New-API Docker Compose Configuration
 # 
 # Quick Start:
 #   1. docker-compose up -d
@@ -27,27 +27,17 @@ services:
       - TZ=Asia/Shanghai
       - ERROR_LOG_ENABLED=true # 是否启用错误日志记录 (Whether to enable error log recording)
       - BATCH_UPDATE_ENABLED=true  # 是否启用批量更新 (Whether to enable batch update)
-      
-      # OIDC 认证配置 - 新增的 Hydra 集成
-      - OIDC_ENABLED=true
-      - OIDC_ISSUER_URL=http://hydra:4444/
-      - OIDC_CLIENT_ID=new-api-client
-      - OIDC_CLIENT_SECRET=super-secret-client-key-change-me
-      - OIDC_REDIRECT_URI=http://localhost:3000/auth/callback
-      - OIDC_SCOPES=openid,profile,email
-
       # Hydra OAuth Provider 配置（new-api 作为 Login/Consent Provider）
       - HYDRA_ENABLED=true
       - HYDRA_ADMIN_URL=http://hydra:4445
       - HYDRA_TRUSTED_CLIENTS=new-api-web,new-api-admin
-      
     depends_on:
       - redis
       - postgres
       - hydra
       - hydra-db
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\"\\s*true' || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
