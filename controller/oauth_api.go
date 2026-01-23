@@ -10,23 +10,29 @@ import (
 )
 
 // getUserFromContext extracts and validates user ID from context.
-// Returns 0 if unauthorized (also sends error response).
-func getUserFromContext(c *gin.Context) int {
+// Returns (userId, true) if valid, (0, false) if unauthorized.
+func getUserFromContext(c *gin.Context) (int, bool) {
 	userId := c.GetInt("id")
 	if userId == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"error":   "unauthorized",
-		})
+		return 0, false
 	}
-	return userId
+	return userId, true
+}
+
+// abortUnauthorized sends a standardized unauthorized response
+func abortUnauthorized(c *gin.Context) {
+	c.JSON(http.StatusUnauthorized, gin.H{
+		"success": false,
+		"message": "unauthorized",
+	})
 }
 
 // OAuthGetUserInfo returns user information for OAuth clients
 // Scope required: openid, profile
 func OAuthGetUserInfo(c *gin.Context) {
-	userId := getUserFromContext(c)
-	if userId == 0 {
+	userId, ok := getUserFromContext(c)
+	if !ok {
+		abortUnauthorized(c)
 		return
 	}
 
@@ -34,7 +40,7 @@ func OAuthGetUserInfo(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "user not found",
+			"message": "user not found",
 		})
 		return
 	}
@@ -54,8 +60,9 @@ func OAuthGetUserInfo(c *gin.Context) {
 // OAuthGetBalance returns user balance information for OAuth clients
 // Scope required: balance:read
 func OAuthGetBalance(c *gin.Context) {
-	userId := getUserFromContext(c)
-	if userId == 0 {
+	userId, ok := getUserFromContext(c)
+	if !ok {
+		abortUnauthorized(c)
 		return
 	}
 
@@ -63,7 +70,7 @@ func OAuthGetBalance(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "user not found",
+			"message": "user not found",
 		})
 		return
 	}
@@ -80,8 +87,9 @@ func OAuthGetBalance(c *gin.Context) {
 // OAuthGetUsage returns user usage statistics for OAuth clients
 // Scope required: usage:read
 func OAuthGetUsage(c *gin.Context) {
-	userId := getUserFromContext(c)
-	if userId == 0 {
+	userId, ok := getUserFromContext(c)
+	if !ok {
+		abortUnauthorized(c)
 		return
 	}
 
@@ -89,7 +97,7 @@ func OAuthGetUsage(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "user not found",
+			"message": "user not found",
 		})
 		return
 	}
@@ -107,8 +115,9 @@ func OAuthGetUsage(c *gin.Context) {
 // OAuthListTokens returns user's API tokens for OAuth clients
 // Scope required: tokens:read
 func OAuthListTokens(c *gin.Context) {
-	userId := getUserFromContext(c)
-	if userId == 0 {
+	userId, ok := getUserFromContext(c)
+	if !ok {
+		abortUnauthorized(c)
 		return
 	}
 
@@ -116,7 +125,7 @@ func OAuthListTokens(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "failed to get tokens",
+			"message": "failed to get tokens",
 		})
 		return
 	}
@@ -144,8 +153,9 @@ func OAuthListTokens(c *gin.Context) {
 // OAuthCreateToken creates a new API token for OAuth clients
 // Scope required: tokens:write
 func OAuthCreateToken(c *gin.Context) {
-	userId := getUserFromContext(c)
-	if userId == 0 {
+	userId, ok := getUserFromContext(c)
+	if !ok {
+		abortUnauthorized(c)
 		return
 	}
 
@@ -155,7 +165,7 @@ func OAuthCreateToken(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "invalid request: " + err.Error(),
+			"message": "invalid request: " + err.Error(),
 		})
 		return
 	}
@@ -164,7 +174,7 @@ func OAuthCreateToken(c *gin.Context) {
 	if len(req.Name) > 30 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "token name too long (max 30 characters)",
+			"message": "token name too long (max 30 characters)",
 		})
 		return
 	}
@@ -174,7 +184,7 @@ func OAuthCreateToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "failed to generate token key",
+			"message": "failed to generate token key",
 		})
 		return
 	}
@@ -194,7 +204,7 @@ func OAuthCreateToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "failed to create token",
+			"message": "failed to create token",
 		})
 		return
 	}
@@ -212,8 +222,9 @@ func OAuthCreateToken(c *gin.Context) {
 // OAuthDeleteToken deletes an API token for OAuth clients
 // Scope required: tokens:write
 func OAuthDeleteToken(c *gin.Context) {
-	userId := getUserFromContext(c)
-	if userId == 0 {
+	userId, ok := getUserFromContext(c)
+	if !ok {
+		abortUnauthorized(c)
 		return
 	}
 
@@ -221,7 +232,7 @@ func OAuthDeleteToken(c *gin.Context) {
 	if tokenIdStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "missing token id",
+			"message": "missing token id",
 		})
 		return
 	}
@@ -230,7 +241,7 @@ func OAuthDeleteToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "invalid token id",
+			"message": "invalid token id",
 		})
 		return
 	}
@@ -240,7 +251,7 @@ func OAuthDeleteToken(c *gin.Context) {
 	if err != nil || token.UserId != userId {
 		c.JSON(http.StatusNotFound, gin.H{
 			"success": false,
-			"error":   "token not found",
+			"message": "token not found",
 		})
 		return
 	}
@@ -249,7 +260,7 @@ func OAuthDeleteToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"error":   "failed to delete token",
+			"message": "failed to delete token",
 		})
 		return
 	}

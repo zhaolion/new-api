@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/service/hydra"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -243,6 +244,11 @@ func TestOAuthConsent_SkipTrue(t *testing.T) {
 }
 
 func TestOAuthConsent_TrustedClient(t *testing.T) {
+	// Setup trusted clients for this test
+	oldTrustedClients := common.HydraTrustedClients
+	common.HydraTrustedClients = []string{"new-api-web", "new-api-admin"}
+	defer func() { common.HydraTrustedClients = oldTrustedClients }()
+
 	mock := hydra.NewMockProvider()
 	// "new-api-web" is a trusted client
 	mock.SetConsentRequest("trusted-consent", "new-api-web", "Web App", "user-123", []string{"openid", "profile"}, false)
@@ -440,6 +446,11 @@ func TestOAuthLogout_Success(t *testing.T) {
 }
 
 func TestIsTrustedOAuthClient(t *testing.T) {
+	// Setup trusted clients for this test
+	oldTrustedClients := common.HydraTrustedClients
+	common.HydraTrustedClients = []string{"new-api-web", "new-api-admin"}
+	defer func() { common.HydraTrustedClients = oldTrustedClients }()
+
 	tests := []struct {
 		clientID string
 		expected bool

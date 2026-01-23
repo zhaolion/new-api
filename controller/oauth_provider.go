@@ -71,7 +71,7 @@ func (ctrl *OAuthProviderController) OAuthLogin(c *gin.Context) {
 	session := sessions.Default(c)
 	if userID := session.Get("id"); userID != nil {
 		subject := strconv.Itoa(userID.(int))
-		redirect, err := ctrl.hydra.AcceptLogin(c.Request.Context(), challenge, subject, true, 3600)
+		redirect, err := ctrl.hydra.AcceptLogin(c.Request.Context(), challenge, subject, true, common.HydraLoginRememberFor)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
@@ -180,7 +180,7 @@ func (ctrl *OAuthProviderController) OAuthLoginSubmit(c *gin.Context) {
 
 	// Accept login
 	subject := strconv.Itoa(user.Id)
-	redirect, err := ctrl.hydra.AcceptLogin(c.Request.Context(), req.Challenge, subject, true, 3600)
+	redirect, err := ctrl.hydra.AcceptLogin(c.Request.Context(), req.Challenge, subject, true, common.HydraLoginRememberFor)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -262,7 +262,7 @@ func (ctrl *OAuthProviderController) OAuthLogin2FA(c *gin.Context) {
 
 	// Accept login
 	subject := strconv.Itoa(userID.(int))
-	redirect, err := ctrl.hydra.AcceptLogin(c.Request.Context(), challenge.(string), subject, true, 3600)
+	redirect, err := ctrl.hydra.AcceptLogin(c.Request.Context(), challenge.(string), subject, true, common.HydraLoginRememberFor)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -326,7 +326,7 @@ func (ctrl *OAuthProviderController) OAuthConsent(c *gin.Context) {
 			challenge,
 			consentReq.GetRequestedScope(),
 			true,
-			3600,
+			common.HydraConsentRememberFor,
 			nil,
 		)
 		if err != nil {
@@ -381,7 +381,7 @@ func (ctrl *OAuthProviderController) OAuthConsentSubmit(c *gin.Context) {
 
 	var rememberFor int64 = 0
 	if req.Remember {
-		rememberFor = 3600
+		rememberFor = common.HydraConsentRememberFor
 	}
 
 	redirect, err := ctrl.hydra.AcceptConsent(

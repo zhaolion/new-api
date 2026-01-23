@@ -464,6 +464,14 @@ func updateOptionMap(key string, value string) (err error) {
 				}
 			}
 		}
+	case "HydraLoginRememberFor":
+		if v, e := strconv.ParseInt(value, 10, 64); e == nil {
+			common.HydraLoginRememberFor = v
+		}
+	case "HydraConsentRememberFor":
+		if v, e := strconv.ParseInt(value, 10, 64); e == nil {
+			common.HydraConsentRememberFor = v
+		}
 	}
 	return err
 }
